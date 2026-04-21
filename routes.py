@@ -73,3 +73,23 @@ def download_csv():
         mimetype='text/csv',
         headers={'Content-Disposition': 'attachment; filename=datos.csv'}
     )
+    
+    @data_bp.route('/csv_full')
+def csv_full_page():
+    """✅ Página intermedia → csv_view.html"""
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=/csv_view.html">
+        <title>Redirigiendo...</title>
+        <style>body{font-family:Arial;text-align:center;padding:50px;background:#4CAF50;color:white;}</style>
+    </head>
+    <body>
+        <h1>📋 Cargando Registro Completo...</h1>
+        <p>Redirigiendo en 1 segundo...</p>
+        <a href="/csv_view.html">Click aquí si no redirige</a><br><br>
+        <a href="/" style="color:#fff;">🏠 Volver Dashboard</a>
+    </body>
+    </html>
+    '''
