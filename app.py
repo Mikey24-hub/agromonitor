@@ -142,29 +142,28 @@ def status():
     })
     
     @app.route('/data_full')
-def get_data_full():
-    """✅ NUEVO: Todos los datos para CSV_VIEW"""
-    conn = sqlite3.connect('sensores.db')  # Tu DB
-    cursor = conn.cursor()
-    cursor.execute("SELECT timestamp, temp, humidity, rain FROM sensores ORDER BY timestamp DESC")
-    all_data = cursor.fetchall()
-    
-    csv_history = []
-    for row in all_data:
-        csv_history.append({
-            'time': row[0],
-            'temp': row[1],
-            'humidity': row[2],
-            'rain': row[3]
-        })
-    
-    conn.close()
-    return jsonify({'csv_history': csv_history})
-
-# O si usas simulación:
-@app.route('/data_full')
-def get_data_full():
-    return jsonify({'csv_history': HISTORIAL})
+    def get_data_full():
+            """✅ NUEVO: Todos los datos para CSV_VIEW"""
+            conn = sqlite3.connect('sensores.db')  # Tu DB
+            cursor = conn.cursor()
+            cursor.execute("SELECT timestamp, temp, humidity, rain FROM sensores ORDER BY timestamp DESC")
+            all_data = cursor.fetchall()
+            csv_history = []
+            for row in all_data:
+                csv_history.append({
+                    'time': row[0],
+                    'temp': row[1],
+                    'humidity': row[2],
+                    'rain': row[3]
+                })
+            
+            conn.close()
+            return jsonify({'csv_history': csv_history})
+        
+        # O si usas simulación:
+        @app.route('/data_full')
+        def get_data_full():
+            return jsonify({'csv_history': HISTORIAL})
 
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
