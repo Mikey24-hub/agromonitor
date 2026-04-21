@@ -140,6 +140,14 @@ def status():
         'archivo_tamaño': f"{size:.1f} MB",
         'ultimo_registro': sensor_data['time']
     })
+    @app.route('/csv_full')
+def csv_full():
+    """Vista completa del CSV (últimos 100 registros)"""
+    if not historico_csv:
+        return render_template('csv_view.html', registros=[])
+    
+    ultimos = historico_csv[-100:]
+    return render_template('csv_view.html', registros=ultimos)
 
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
