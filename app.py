@@ -141,8 +141,33 @@ def status():
         'ultimo_registro': sensor_data['time']
     })
     
-    from routes import data_bp
-    app.register_blueprint(data_bp)
+@app.route('/csv_full')
+def csv_full():
+        """✅ Botón Ver Registro Completo"""
+        return '''
+        <!DOCTYPE html>
+        <html><head>
+            <meta http-equiv="refresh" content="0;url=/csv_view.html">
+            <title>Redirigiendo...</title>
+        </head>
+        <body style="text-align:center;padding:100px;background:#4CAF50;color:white;">
+            <h1>📋 Registro Completo</h1>
+            <a href="/csv_view.html">→ Tabla Completa</a><br><br>
+            <a href="/">🏠 Dashboard</a>
+        </body>
+        </html>
+        '''
+
+@app.route('/csv_view.html')
+def csv_view_page():
+    try:
+        return send_from_directory('templates', 'csv_view.html')
+    except:
+        return "csv_view.html no encontrado - crear templates/csv_view.html"
+
+@app.route('/index_simple.html')
+def index_simple_direct():
+    return render_template('index_simple.html')
 
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
