@@ -160,10 +160,11 @@ def csv_full():
 
 @app.route('/csv_view.html')
 def csv_view():
-    return render_template('csv_view.html')
-    except:
-        return "csv_view.html no encontrado - crear templates/csv_view.html"
-
+    try:                                   
+        return render_template('csv_view.html') 
+    except:                                 
+        return "Crear templates/csv_view.html"
+        
 @app.route('/index_simple.html')
 def index_simple_direct():
     return render_template('index_simple.html')
