@@ -10,10 +10,6 @@ import os
 
 app = Flask(__name__, static_folder='.', static_url_path='') 
 
-@app.route('/sw.js')
-def serve_sw():
-    return send_from_directory('.', 'sw.js', mimetype='application/javascript')
-
 @app.route('/service-worker.js')
 def serve_service_worker():
     return send_from_directory('.', 'service-worker.js', mimetype='application/javascript')
