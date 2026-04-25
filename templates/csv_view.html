@@ -184,8 +184,10 @@
             z-index: 9999;
           }
         }
-
-        /* 🌱 BOTÓN INSTALAR PWA */
+        
+        </style>
+    <style>
+    /* 🌱 BOTÓN INSTALAR PWA */
             .install-btn {
               position: fixed;
               bottom: 30px;
@@ -211,40 +213,41 @@
             .install-btn:active {
               transform: scale(0.95);
             }
+
+        <style>
+        
         <!-- 🌱 BOTÓN INSTALAR APP -->
-            <button id="installBtn" class="install-btn" title="Instalar AgroMonitor" style="display:none;">
-              🌱
-            </button>
-            
-            <script>
-            // PWA Install Button
-            let deferredPrompt;
-            const installBtn = document.getElementById('installBtn');
-            
-            window.addEventListener('beforeinstallprompt', (e) => {
-              e.preventDefault();
-              deferredPrompt = e;
-              installBtn.style.display = 'flex';
-              console.log('📱 Botón instalar visible');
-            });
-            
-            installBtn.addEventListener('click', async () => {
-              if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log('Instalación:', outcome);
-                installBtn.style.display = 'none';
-                deferredPrompt = null;
-              }
-            });
-            
-            // Ocultar si ya instalada
-            window.addEventListener('appinstalled', () => {
-              installBtn.style.display = 'none';
-            });
-            </script>
-        </style>
-    
+        <button id="installBtn" class="install-btn" title="Instalar AgroMonitor" style="display:none;">
+          🌱
+        </button>
+        
+        <script>
+        // PWA Install Button
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installBtn.style.display = 'flex';
+          console.log('📱 Botón instalar visible');
+        });
+        
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Instalación:', outcome);
+            installBtn.style.display = 'none';
+            deferredPrompt = null;
+          }
+        });
+        
+        // Ocultar si ya instalada
+        window.addEventListener('appinstalled', () => {
+          installBtn.style.display = 'none';
+        });
+        </script>
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4CAF50">
