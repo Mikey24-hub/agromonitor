@@ -2,8 +2,8 @@ const CACHE_NAME = 'mikey24hub-v1';
 const urlsToCache = [
   '/',
   '/static/manifest.json',
-  '/static/icon-192.png',
-  '/static/icon-512.png'
+  '/static/seedling.png',
+  '/static/seedling.png'
 ];
 
 self.addEventListener('install', event => {
