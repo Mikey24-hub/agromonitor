@@ -168,6 +168,22 @@
             table { font-size: 0.85em; }
             th, td { padding: 12px 8px; }
         }
+
+        @media (display-mode: standalone) {
+          body::before {
+            content: "🌱 AgroMonitor v5.2";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+          }
+        }
         </style>
     
     <!-- PWA -->
