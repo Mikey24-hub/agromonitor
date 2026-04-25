@@ -8,7 +8,19 @@ import time
 import threading
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='') 
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('.', 'sw.js', mimetype='application/javascript')
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('.', 'manifest.json', mimetype='application/json')
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
