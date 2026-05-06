@@ -283,23 +283,6 @@ def configurar_esp(ip):
             return jsonify({'success': False, 'error': f'HTTP {response.status_code}'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-    
-@app.route('/csv_full')
-def csv_full():
-        """✅ Botón Ver Registro Completo"""
-        return '''
-        <!DOCTYPE html>
-        <html><head>
-            <meta http-equiv="refresh" content="0;url=/csv_view.html">
-            <title>Redirigiendo...</title>
-        </head>
-        <body style="text-align:center;padding:100px;background:#4CAF50;color:white;">
-            <h1>📋 Registro Completo</h1>
-            <a href="/csv_view.html">→ Tabla Completa</a><br><br>
-            <a href="/">🏠 Dashboard</a>
-        </body>
-        </html>
-        '''
 
 @app.route('/csv_view.html')
 def csv_view():
@@ -311,6 +294,13 @@ def csv_view():
 @app.route('/index_simple.html')
 def index_simple_direct():
     return render_template('index_simple.html')
+
+@app.route('/data_full')
+def data_full():
+    return jsonify({
+        'csv_history': historico_csv[-1000:],
+        'total_registros': sensor_data['total_registros']
+    })
 
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
