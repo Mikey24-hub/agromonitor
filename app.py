@@ -133,18 +133,41 @@ def data():
 
 @app.route('/lora_data', methods=['POST'])
 def lora_data():
-    """📡 ESP LoRa datos reales"""
-    global sensor_data
+    """📡 ESP LoRa → Dashboard LIVE"""
+    global sensor_data, historicos_graficas, historico_times, historico_csv
+    
     try:
         data = request.get_json()
+        print(f"📡 ESP → T:{data['temp']:.1f}°C H:{data['humidity']:.1f}% R:{data['rain']:.1f}%")
+        
+        # Actualiza dashboard INSTANTÁNEO
         sensor_data.update({
-            'temp': data['temp'],
-            'humidity': data['humidity'], 
-            'rain': data['rain'],
-            'modulos_conectados': data.get('modulos_conectados', True)
+            'temp': data.get('temp', 0),
+            'humidity': data.get('humidity', 0),
+            'rain': data.get('rain', 0),
+            'modulos_conectados': data.get('modulos_conectados', True),
+            'time': datetime.now().strftime('%H:%M:%S')
         })
-        print(f"📡 ESP REAL → T:{data['temp']:.1f} H:{data['humidity']:.1f} R:{data['rain']:.1f}")
-        return jsonify({'status': 'OK'})
+        
+        # Agrega a gráficos (igual simulación)
+        now_time = sensor_data['time']
+        historico_times.append(now_time)
+        historicos_graficas['temp'].append(sensor_data['temp'])
+        historicos_graficas['humidity'].append(sensor_data['humidity']) 
+        historicos_graficas['rain'].append(sensor_data['rain'])
+        
+        # Límite 50 puntos
+        if len(historico_times) > 50:
+            historico_times.pop(0)
+            for key in historicos_graficas:
+                historicos_graficas[key].pop(0)
+        
+        # CSV histórico
+        registro = [now_time, sensor_data['temp'], sensor_data['humidity'], sensor_data['rain']]
+        historico_csv.append(registro)
+        sensor_data['total_registros'] = len(historico_csv)
+        
+        return jsonify({'status': 'OK', 'time': now_time})
     except Exception as e:
         print(f"❌ ESP Error: {e}")
         return jsonify({'status': 'ERROR'}), 400
@@ -181,46 +204,36 @@ def esp_config():
 
 @app.route('/scan_esps')
 def scan_esps():
-    """🔍 ESP LoRa AP + Cliente - TU CÓDIGO"""
+    """🔍 ESP LoRa Automático - MÉTODO FÁCIL"""
+    print("🔍 === DETECTANDO ESP ===")
     esps = []
     
-    # ✅ 1. ESP AP Mode (TU CASO: 192.168.4.1)
-    ap_ips = ['192.168.4.1', '192.168.1.1']
-    for ip in ap_ips:
+    # IPs comunes ESP AP
+    ips_esp = ['192.168.4.1', '192.168.1.1']
+    
+    for ip in ips_esp:
+        print(f"Test {ip}...")
         try:
-            # Test página config (tu HTML)
-            r = requests.get(f'http://{ip}:80/', timeout=1.5)
-            if 'ESP LoRa Config' in r.text or 'ESP_LoRa_Config' in r.text or 'wifi_ssid' in r.text:
+            r = requests.get(f'http://{ip}:80/', timeout=2)
+            print(f"  → {r.status_code} bytes:{len(r.text)}")
+            
+            # Detecta tu HTML config
+            if r.status_code == 200 and ('ESP' in r.text or 'wifi_ssid' in r.text):
                 esps.append({
-                    'ip': ip, 'port': 80,
-                    'name': '🌱 ESP LoRa (AP Mode)',
+                    'ip': ip,
+                    'name': f'🌱 ESP LoRa v5.2 ({ip})',
                     'online': True,
                     'temp': 21.9,
                     'humidity': 48.7,
                     'rain': 0.0,
-                    'mode': 'AP'
+                    'mode': 'AP Mode ✅'
                 })
-                print(f"✅ ESP AP detectado: {ip}")
-        except:
-            pass
+                print(f"✅ ESP ENCONTRADO: {ip}")
+                break
+        except Exception as e:
+            print(f"  → Error: {e}")
     
-    # 2. Scan WiFi cliente (futuro)
-    try:
-        result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
-        ips = re.findall(r'\b192\.168\.\d{1,3}\.\d{1,3}\b', result.stdout)
-        for ip in ips[:10]:
-            if ip not in [e['ip'] for e in esps]:
-                try:
-                    r = requests.get(f'http://{ip}:80/status', timeout=1)
-                    if r.status_code == 200:
-                        data = r.json()
-                        esps.append({'ip': ip, 'name': data.get('device', 'ESP'), **data, 'online': True})
-                except:
-                    pass
-    except:
-        pass
-    
-    print(f"🔍 Encontrados {len(esps)} ESPs: {[e['ip'] for e in esps]}")
+    print(f"🔍 RESULTADO: {len(esps)} ESPs")
     return jsonify({'esps': esps})
 
 @app.route('/esp_config/<ip>')
