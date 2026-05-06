@@ -197,11 +197,6 @@ def status():
         'ultimo_registro': sensor_data['time']
     })
 
-@app.route('/esp_config.html')
-def esp_config():
-    """🔧 Página configuración ESP LoRa"""
-    return render_template('esp_config.html', local_ip=LOCAL_IP)
-
 @app.route('/scan_esps')
 def scan_esps():
     """🔍 Auto-detect ESPs - CUALQUIER IP"""
@@ -301,6 +296,32 @@ def data_full():
         'csv_history': historico_csv[-1000:],
         'total_registros': sensor_data['total_registros']
     })
+
+@app.route('/public/<path:filename>')
+def public_files(filename):
+    """📁 Servir archivos de public/"""
+    return send_from_directory('public', filename)
+
+@app.route('/esp-proxy')
+def esp_proxy():
+    """🌐 Proxy CORS para ESP (cualquier IP)"""
+    target = request.args.get('target')
+    if not target or not re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', target):
+        return jsonify({'error': 'URL inválida'}), 400
+    
+    try:
+        resp = requests.request(
+            method=request.method,
+            url=target,
+            params={k: v[0] for k, v in request.args.items() if k != 'target'},
+            data=request.get_data(),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            timeout=5
+        )
+        return Response(resp.content, resp.status_code, 
+                       [(k, v) for k, v in resp.headers.items()])
+    except Exception as e:
+        return jsonify({'error': f'ESP offline: {str(e)}'}), 503
 
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
