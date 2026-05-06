@@ -1,8 +1,6 @@
 {
-  "name": "agromonitor-esp-config",
+  "name": "agromonitor",
   "version": "1.0.0",
-  "description": "ESP Config Proxy",
-  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
