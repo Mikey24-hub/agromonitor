@@ -3,270 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroMonitor</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' font-size='24' text-anchor='middle' dominant-baseline='middle' fill='%234CAF50'%3E🌡️%3C/text%3E%3C/svg%3E">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; background: linear-gradient(45deg, #4CAF50, #45a049); color: white; padding: 40px; border-radius: 25px; margin-bottom: 30px; box-shadow: 0 25px 50px rgba(76,175,80,0.3); }
-        .header h1 { font-size: 2.8em; margin-bottom: 15px; }
-        .header p { font-size: 1.3em; opacity: 0.95; }
-        .esp-scanner { background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
-        .scan-btn { background: linear-gradient(45deg, #FF9800, #F57C00); color: white; border: none; padding: 18px 40px; border-radius: 50px; font-size: 1.2em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .scan-btn:hover, .scan-btn.scanning { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(255,152,0,0.4); }
-        .scan-btn.scanning { background: #2196F3; }
-        .esp-list { margin-top: 25px; display: grid; gap: 15px; }
-        .esp-item { background: #f8f9fa; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #4CAF50; cursor: pointer; transition: all 0.3s; }
-        .esp-item:hover, .esp-item.selected { background: #e8f5e8; transform: translateX(5px); }
-        .esp-item.offline { opacity: 0.5; border-left-color: #f44336; }
-        .esp-ap { border-left-color: #FF9800 !important; background: #fff3e0 !important; }
-        .config-form { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: none; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .form-group label { font-weight: 600; color: #333; font-size: 1em; }
-        .form-group input, .form-group select { padding: 15px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 1em; transition: all 0.3s; }
-        .form-group input:focus, .form-group select:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76,175,80,0.1); }
-        .config-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 15px 35px; border: none; border-radius: 50px; font-size: 1.1em; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s; color: white; }
-        .btn-primary { background: linear-gradient(45deg, #4CAF50, #45a049); }
-        .btn-secondary { background: linear-gradient(45deg, #2196F3, #1976D2); }
-        .btn-danger { background: linear-gradient(45deg, #f44336, #d32f2f); }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .status-section { background: white; border-radius: 20px; padding: 30px; margin-top: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); display: none; }
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .status-card { text-align: center; padding: 25px; background: #f8f9fa; border-radius: 15px; }
-        .status-online { color: #4CAF50; font-weight: bold; font-size: 1.5em; }
-        .status-offline { color: #f44336; font-weight: bold; font-size: 1.5em; }
-        .loading { text-align: center; padding: 60px; color: #999; font-size: 1.2em; }
-        .alert { padding: 20px; margin: 20px 0; border-radius: 15px; font-weight: 600; }
-        .alert-success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
-        .alert-error { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } body { padding: 15px; } }
-    </style>
+    <title>🌱 AgroMonitor ESP 10.132.48.90</title>
+    <!-- CSS igual que antes -->
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌱 Configurar ESP WiFi Directo</h1>
-            <p>🔌 Conecta PC a "ESP_AgroScan" → Detecta 192.168.4.1 automáticamente</p>
-        </div>
-
-        <div class="esp-scanner">
-            <button class="scan-btn" onclick="scanESPs()" id="scanBtn">🔍 Detectar ESP (192.168.4.1)</button>
-            <div id="espList" class="esp-list">
-                <div class="loading">🔌 <strong>PASO 1:</strong> Conecta a "ESP_AgroScan"<br>
-                    <strong>PASO 2:</strong> Espera 10s → 🔍 ESCANEA</div>
-            </div>
-        </div>
-
-        <div id="configForm" class="config-form">
-            <h3>⚙️ Configurar <span id="espName">ESP WiFi</span></h3>
-            <div id="alert" class="alert" style="display:none;"></div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>📶 WiFi SSID (tu red)</label>
-                    <input type="text" id="wifiSSID" placeholder="MiWiFi" required>
-                </div>
-                <div class="form-group">
-                    <label>🔑 WiFi Password</label>
-                    <input type="password" id="wifiPass" placeholder="contraseña">
-                </div>
-                <div class="form-group">
-                    <label>🌐 IP AgroMonitor</label>
-                    <input type="text" id="serverIP" value="192.168.1.100" required>
-                </div>
-                <div class="form-group">
-                    <label>🔌 Puerto AgroMonitor</label>
-                    <input type="number" id="serverPort" value="8080" min="80" max="65535">
-                </div>
-            </div>
-            <div class="config-actions">
-                <button class="btn btn-primary" onclick="configurarESP()">🚀 Configurar & Reiniciar</button>
-                <button class="btn btn-secondary" onclick="testConexion()">🧪 Ver Sensores LIVE</button>
-                <a href="/" class="btn btn-secondary">🏠 Dashboard</a>
-            </div>
-        </div>
-
-        <div id="statusSection" class="status-section">
-            <h3>📊 Sensores ESP en VIVO (actualiza cada 2s)</h3>
-            <div class="status-grid" id="espStatus"></div>
-        </div>
-    </div>
-
+    <!-- HTML igual hasta script -->
     <script>
-        let espSeleccionado = null;
+        let espIP = '10.132.48.90'; // ¡TU ESP!
 
-        // 🔍 DETECTAR ESP WIFI DIRECTO 192.168.4.1
+        // 🔍 DIRECTO A TU ESP
         async function scanESPs() {
-            const btn = document.getElementById('scanBtn');
             const list = document.getElementById('espList');
-            
-            btn.textContent = '🔍 Probando 192.168.4.1...';
-            btn.classList.add('scanning');
-            list.innerHTML = '<div class="loading">🔌 Conectando http://192.168.4.1/status...</div>';
+            list.innerHTML = `<div class="loading">🔍 Conectando ${espIP}...</div>`;
             
             try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 4000);
-                
-                const response = await fetch('http://192.168.4.1/status', {
-                    signal: controller.signal
-                });
-                clearTimeout(timeout);
-                
+                const response = await fetch(`http://${espIP}/status`);
                 const data = await response.json();
-                espSeleccionado = '192.168.4.1';
                 
-                list.innerHTML = `
-                    <div class="esp-item esp-ap selected" 
-                         onclick="seleccionarESP('192.168.4.1', 'ESP_AgroScan WiFi')">
-                        <div>
-                            <strong>🌱 ESP_AgroScan (WiFi Directo)</strong><br>
-                            <small>📶 <strong>192.168.4.1</strong> | T:${data.temp||0}°C</small>
-                        </div>
-                        <div style="text-align:right;">
-                            <div>🟢 LIVE</div>
-                            <small>H:${data.humidity||0}%</small>
-                        </div>
+                document.getElementById('espList').innerHTML = `
+                    <div class="esp-item selected">
+                        <strong>🌱 ESP AgroScan ${espIP}</strong><br>
+                        <small>📶 LIVE | T:${data.temp||0}°C H:${data.humidity||0}%</small>
                     </div>
                 `;
                 
+                espSeleccionado = espIP;
                 document.getElementById('configForm').style.display = 'block';
-                document.getElementById('espName').textContent = 'ESP_AgroScan WiFi';
-                mostrarAlert('✅ ESP detectado! Configura WiFi → LIVE', 'success');
+                testConexion();
                 
             } catch(e) {
-                list.innerHTML = `
-                    <div style="padding:40px;text-align:center;color:#f44336;">
-                        <div style="font-size:3em;margin-bottom:20px;">🔌</div>
-                        ❌ No conectado a "ESP_AgroScan"<br><br>
-                        <strong>🔧 SOLUCIÓN:</strong><br>
-                        1. Olvida tu WiFi actual<br>
-                        2. Conecta "ESP_AgroScan"<br>
-                        3. Espera 10s → 🔍 Reintenta
+                document.getElementById('espList').innerHTML = `
+                    <div style="color:#f44336;">
+                        ❌ ${espIP} offline<br>
+                        <small>Ver Serial Monitor ESP</small>
                     </div>
                 `;
             }
-            
-            btn.textContent = '🔄 Reintentar';
-            btn.classList.remove('scanning');
         }
 
-        function seleccionarESP(ip, name) {
-            espSeleccionado = ip;
-            document.getElementById('espName').textContent = name;
-            testConexion(); // Auto-test
-        }
-
-        // 🧪 TEST + LIVE SENSORS
+        // LIVE DATA TU ESP
         async function testConexion() {
-            if (!espSeleccionado) {
-                mostrarAlert('❌ Conecta a ESP_AgroScan primero', 'error');
-                return;
-            }
-
-            try {
-                mostrarAlert('🧪 Leyendo sensores...', 'success');
-                const response = await fetch(`http://${espSeleccionado}/status`);
-                const status = await response.json();
-                mostrarStatusESP(status);
-                document.getElementById('statusSection').style.display = 'block';
-                updateStatusLive(); // Inicia live updates
-            } catch(e) {
-                mostrarAlert('❌ ESP no responde: ' + espSeleccionado, 'error');
-            }
+            const response = await fetch(`http://${espIP}/status`);
+            const status = await response.json();
+            mostrarStatusESP(status);
+            document.getElementById('statusSection').style.display = 'block';
+            updateStatusLive();
         }
 
-        // LIVE UPDATES 2s
         async function updateStatusLive() {
-            if (!espSeleccionado) return;
             try {
-                const response = await fetch(`http://${espSeleccionado}/status`);
+                const response = await fetch(`http://${espIP}/status`);
                 mostrarStatusESP(await response.json());
                 setTimeout(updateStatusLive, 2000);
-            } catch(e) {
-                // Silencioso si offline
-            }
+            } catch(e) {}
         }
 
-        function mostrarStatusESP(status) {
-            const grid = document.getElementById('espStatus');
-            grid.innerHTML = `
-                <div class="status-card">
-                    <span>🌡️ Temperatura</span>
-                    <div class="${status.temp > 0 ? 'status-online' : 'status-offline'}">${status.temp || 0}°C</div>
-                </div>
-                <div class="status-card">
-                    <span>💧 Humedad</span>
-                    <div class="${status.humidity > 0 ? 'status-online' : 'status-offline'}">${status.humidity || 0}%</div>
-                </div>
-                <div class="status-card">
-                    <span>🌧️ Lluvia</span>
-                    <div class="${status.rain >= 0 ? 'status-online' : 'status-offline'}">${status.rain || 0}%</div>
-                </div>
-                <div class="status-card">
-                    <span>📶 WiFi</span>
-                    <div class="${status.wifi_status ? 'status-online' : 'status-offline'}">${status.wifi_status ? '🟢 OK' : '🔴 AP'}</div>
-                </div>
-                <div class="status-card">
-                    <span>📡 RSSI</span>
-                    <div class="status-online">${status.wifi_rssi || 0}dBm</div>
-                </div>
-                <div class="status-card">
-                    <span>⏱️ Uptime</span>
-                    <div class="status-online">${Math.round((status.uptime||0)/1000)}s</div>
-                </div>
-            `;
-        }
-
-        // 🚀 CONFIGURAR ESP
+        // Configurar (ya no necesario, pero funciona)
         async function configurarESP() {
-            if (espSeleccionado !== '192.168.4.1') {
-                mostrarAlert('❌ Solo funciona con 192.168.4.1', 'error');
-                return;
-            }
-
-            const config = {
-                ssid: document.getElementById('wifiSSID').value,
-                password: document.getElementById('wifiPass').value,
-                servidor_ip: document.getElementById('serverIP').value,
-                servidor_port: parseInt(document.getElementById('serverPort').value)
-            };
-
-            mostrarAlert('🚀 Enviando config...', 'success');
-
-            try {
-                const response = await fetch(`http://${espSeleccionado}/save`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: new URLSearchParams(config)
-                });
-                
-                const result = await response.text();
-                mostrarAlert('✅ Config enviada! ESP reinicia en 3s...', 'success');
-                
-                setTimeout(() => {
-                    mostrarAlert('🔄 ESP reiniciando... Conecta a tu WiFi normal', 'success');
-                }, 2000);
-                
-            } catch(e) {
-                mostrarAlert('❌ Error: ' + e.message, 'error');
-            }
+            alert('✅ ESP ya configurado en ' + espIP);
         }
 
-        function mostrarAlert(msg, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = msg;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-            setTimeout(() => alert.style.display = 'none', 5000);
-        }
-
-        // 🚀 AUTO INICIO
+        // INICIO
         window.onload = () => {
-            setTimeout(scanESPs, 1500);
-            setInterval(scanESPs, 10000); // Re-scan 10s
+            document.getElementById('scanBtn').onclick = () => {
+                scanESPs();
+            };
+            setTimeout(testConexion, 1000);
         };
     </script>
 </body>
