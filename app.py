@@ -7,6 +7,10 @@ import socket
 import time
 import threading
 import os
+import subprocess
+import re
+import requests 
+from flask import request, jsonify
 
 app = Flask(__name__, static_folder='.', static_url_path='') 
 
@@ -152,6 +156,176 @@ def status():
         'archivo_tamaño': f"{size:.1f} MB",
         'ultimo_registro': sensor_data['time']
     })
+
+@app.route('/esp_config.html')
+def esp_config():
+    """🔧 Página configuración ESP LoRa"""
+    return render_template('esp_config.html', local_ip=LOCAL_IP)
+
+@app.route('/scan_esps')
+def scan_esps():
+    """🔍 Escanear ESPs en red"""
+    try:
+        # Escanear dispositivos activos
+        result = subprocess.run(['arp', '-a'], capture_output=True, text=True, timeout=5)
+        esps = []
+        
+        # Buscar IPs en red local
+        ips = re.findall(r'\b(?:192\.168\.\d{1,3}\.|10\.\d{1,3}\.|172\.(1[6-9]|2\d|3[01])\.)\d{1,3}\b', result.stdout)
+        
+        for ip in ips[:15]:  # Máx 15 dispositivos
+            try:
+                # Test conexión ESP config (puerto 80)
+                response = requests.get(f'http://{ip}:80/status', timeout=1.5)
+                if response.status_code == 200:
+                    data = response.json()
+                    esps.append({
+                        'ip': ip,
+                        'name': data.get('device', 'ESP LoRa') or 'ESP LoRa ' + ip,
+                        'online': True,
+                        'temp': data.get('temp', 0),
+                        'humidity': data.get('humidity', 0),
+                        'rain': data.get('rain', 0)
+                    })
+            except:
+                # Test AP modo config
+                try:
+                    response = requests.get(f'http://{ip}:80/', timeout=1)
+                    if 'ESP LoRa Config' in response.text:
+                        esps.append({
+                            'ip': ip,
+                            'name': 'ESP LoRa (Modo Config)',
+                            'online': True,
+                            'temp': 0,
+                            'humidity': 0,
+                            'rain': 0
+                        })
+                except:
+                    pass
+        
+        return jsonify({'esps': esps})
+    except:
+        return jsonify({'esps': []})
+
+@app.route('/esp_config/<ip>')
+def get_esp_config(ip):
+    """📥 Config actual del ESP"""
+    try:
+        response = requests.get(f'http://{ip}:80/status', timeout=2)
+        return jsonify(response.json())
+    except:
+        return jsonify({'error': 'No response'})
+
+@app.route('/esp_status/<ip>')
+def esp_status(ip):
+    """📊 Status en tiempo real"""
+    try:
+        response = requests.get(f'http://{ip}:80/status', timeout=2)
+        data = response.json()
+        data['ip'] = ip
+        return jsonify(data)
+    except:
+        return jsonify({'ip': ip, 'error': 'Offline', 'temp': 0, 'humidity': 0, 'rain': 0})
+
+@app.route('/configurar_esp/<ip>', methods=['POST'])
+def configurar_esp(ip):
+    """🚀 Enviar config al ESP"""
+    try:
+        config = request.get_json()
+        response = requests.post(f'http://{ip}:80/save', 
+                               json=config, timeout=5)
+        
+        if response.status_code == 200:
+            return jsonify({'success': True, 'message': 'ESP configurado y reiniciando...'})
+        else:
+            return jsonify({'success': False, 'error': f'HTTP {response.status_code}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/esp_config.html')
+def esp_config():
+    """🔧 Página configuración ESP LoRa"""
+    return render_template('esp_config.html', local_ip=LOCAL_IP)
+
+@app.route('/scan_esps')
+def scan_esps():
+    """🔍 Escanear ESPs en red"""
+    try:
+        # Escanear dispositivos activos
+        result = subprocess.run(['arp', '-a'], capture_output=True, text=True, timeout=5)
+        esps = []
+        
+        # Buscar IPs en red local
+        ips = re.findall(r'\b(?:192\.168\.\d{1,3}\.|10\.\d{1,3}\.|172\.(1[6-9]|2\d|3[01])\.)\d{1,3}\b', result.stdout)
+        
+        for ip in ips[:15]:  # Máx 15 dispositivos
+            try:
+                # Test conexión ESP config (puerto 80)
+                response = requests.get(f'http://{ip}:80/status', timeout=1.5)
+                if response.status_code == 200:
+                    data = response.json()
+                    esps.append({
+                        'ip': ip,
+                        'name': data.get('device', 'ESP LoRa') or 'ESP LoRa ' + ip,
+                        'online': True,
+                        'temp': data.get('temp', 0),
+                        'humidity': data.get('humidity', 0),
+                        'rain': data.get('rain', 0)
+                    })
+            except:
+                # Test AP modo config
+                try:
+                    response = requests.get(f'http://{ip}:80/', timeout=1)
+                    if 'ESP LoRa Config' in response.text:
+                        esps.append({
+                            'ip': ip,
+                            'name': 'ESP LoRa (Modo Config)',
+                            'online': True,
+                            'temp': 0,
+                            'humidity': 0,
+                            'rain': 0
+                        })
+                except:
+                    pass
+        
+        return jsonify({'esps': esps})
+    except:
+        return jsonify({'esps': []})
+
+@app.route('/esp_config/<ip>')
+def get_esp_config(ip):
+    """📥 Config actual del ESP"""
+    try:
+        response = requests.get(f'http://{ip}:80/status', timeout=2)
+        return jsonify(response.json())
+    except:
+        return jsonify({'error': 'No response'})
+
+@app.route('/esp_status/<ip>')
+def esp_status(ip):
+    """📊 Status en tiempo real"""
+    try:
+        response = requests.get(f'http://{ip}:80/status', timeout=2)
+        data = response.json()
+        data['ip'] = ip
+        return jsonify(data)
+    except:
+        return jsonify({'ip': ip, 'error': 'Offline', 'temp': 0, 'humidity': 0, 'rain': 0})
+
+@app.route('/configurar_esp/<ip>', methods=['POST'])
+def configurar_esp(ip):
+    """🚀 Enviar config al ESP"""
+    try:
+        config = request.get_json()
+        response = requests.post(f'http://{ip}:80/save', 
+                               json=config, timeout=5)
+        
+        if response.status_code == 200:
+            return jsonify({'success': True, 'message': 'ESP configurado y reiniciando...'})
+        else:
+            return jsonify({'success': False, 'error': f'HTTP {response.status_code}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
     
 @app.route('/csv_full')
 def csv_full():
