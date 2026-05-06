@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 ESP LoRa Config - AgroMonitor</title>
+    <!-- FAVICONS + PWA igual que antes -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' font-size='24' text-anchor='middle' dominant-baseline='middle' fill='%234CAF50'%3E🌱%3C/text%3E%3C/svg%3E">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 40px;
+            border-radius: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 25px 50px rgba(76,175,80,0.3);
+        }
+        .header h1 { font-size: 2.8em; margin-bottom: 15px; }
+        .header p { font-size: 1.3em; opacity: 0.95; }
+
+        /* 🎛️ SCANNER ESPs */
+        .esp-scanner {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .scan-btn {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .scan-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(33,150,243,0.4); }
+        .esp-list {
+            margin-top: 25px;
+            display: grid;
+            gap: 15px;
+        }
+        .esp-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #4CAF50;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .esp-item:hover { background: #e8f5e8; transform: translateX(5px); }
+        .esp-item.offline { opacity: 0.5; border-left-color: #f44336; }
+
+        /* ⚙️ FORM CONFIG */
+        .config-form {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1em;
+        }
+        .form-group input, .form-group select {
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+        }
+        .config-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            color: white;
+        }
+        .btn-primary { background: linear-gradient(45deg, #4CAF50, #45a049); }
+        .btn-secondary { background: linear-gradient(45deg, #2196F3, #1976D2); }
+        .btn-danger { background: linear-gradient(45deg, #f44336, #d32f2f); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+
+        .status-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .status-card {
+            text-align: center;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        .status-online { color: #4CAF50; font-weight: bold; }
+        .status-offline { color: #f44336; font-weight: bold; }
+
+        .loading { text-align: center; padding: 60px; color: #999; font-size: 1.2em; }
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            body { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Configurar ESP LoRa</h1>
+            <p>Detecta y configura dispositivos ESP8266 LoRa automáticamente</p>
+        </div>
+
+        <div class="esp-scanner">
+            <button class="scan-btn" onclick="scanESPs()">🔍 Escanear ESPs</button>
+            <div id="espList" class="esp-list">
+                <div class="loading">Presiona "Escanear ESPs" para buscar...</div>
+            </div>
+        </div>
+
+        <div id="configForm" class="config-form">
+            <h3>⚙️ Configurar Dispositivo Seleccionado</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>📶 WiFi SSID</label>
+                    <input type="text" id="wifiSSID" placeholder="MiWiFi" required>
+                </div>
+                <div class="form-group">
+                    <label>🔑 WiFi Password</label>
+                    <input type="password" id="wifiPass" placeholder="contraseña">
+                </div>
+                <div class="form-group">
+                    <label>🌐 IP Servidor (este AgroMonitor)</label>
+                    <input type="text" id="serverIP" value="{{ local_ip }}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>🔌 Puerto AgroMonitor</label>
+                    <input type="number" id="serverPort" value="8080" min="80" max="65535">
+                </div>
+                <div class="form-group">
+                    <label>📡 Frecuencia LoRa</label>
+                    <select id="loraFreq">
+                        <option value="433000000">433 MHz (Europa/Asia)</option>
+                        <option value="868000000" selected>868 MHz (Europa)</option>
+                        <option value="915000000">915 MHz (América)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="config-actions">
+                <button class="btn btn-primary" onclick="configurarESP()">🚀 Configurar ESP</button>
+                <button class="btn btn-secondary" onclick="testConexion()">🧪 Test Conexión</button>
+                <a href="/" class="btn btn-secondary">🏠 Dashboard</a>
+            </div>
+        </div>
+
+        <div id="statusSection" class="status-section" style="display:none;">
+            <h3>📊 Estado del ESP Configurado</h3>
+            <div class="status-grid" id="espStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        let espsDetectados = [];
+        let espSeleccionado = null;
+
+        // 🔍 ESCANEAR ESPs en red
+        async function scanESPs() {
+            document.getElementById('espList').innerHTML = '<div class="loading">🔍 Escaneando red...</div>';
+            
+            try {
+                const response = await fetch('/scan_esps');
+                const data = await response.json();
+                espsDetectados = data.esps || [];
+                mostrarESPs();
+            } catch(e) {
+                document.getElementById('espList').innerHTML = '❌ Error de red';
+            }
+        }
+
+        function mostrarESPs() {
+            const list = document.getElementById('espList');
+            if (espsDetectados.length === 0) {
+                list.innerHTML = '<div class="loading">No se encontraron ESPs en modo config</div>';
+                return;
+            }
+
+            list.innerHTML = espsDetectados.map(esp => `
+                <div class="esp-item ${esp.online ? '' : 'offline'}" onclick="seleccionarESP('${esp.ip}')">
+                    <div>
+                        <strong>🌱 ${esp.name || 'ESP LoRa'}</strong><br>
+                        <small>IP: ${esp.ip} | MAC: ${esp.mac?.slice(0,8)}...</small>
+                    </div>
+                    <span>${esp.online ? '🟢 ONLINE' : '🔴 OFFLINE'}</span>
+                </div>
+            `).join('');
+        }
+
+        function seleccionarESP(ip) {
+            espSeleccionado = ip;
+            document.querySelectorAll('.esp-item').forEach(item => 
+                item.style.background = item.style.background === 'rgb(232, 245, 232)' ? '' : ''
+            );
+            event.currentTarget.style.background = '#e8f5e8';
+            document.getElementById('configForm').style.display = 'block';
+            
+            // Cargar config actual del ESP
+            cargarConfigESP(ip);
+        }
+
+        async function cargarConfigESP(ip) {
+            try {
+                const response = await fetch(`/esp_config/${ip}`);
+                const config = await response.json();
+                document.getElementById('wifiSSID').value = config.wifi_ssid || '';
+                document.getElementById('wifiPass').value = config.wifi_pass || '';
+                document.getElementById('serverPort').value = config.servidor_port || 8080;
+                document.getElementById('loraFreq').value = config.lora_freq || 433000000;
+            } catch(e) {
+                console.log('No se pudo cargar config');
+            }
+        }
+
+        async function configurarESP() {
+            if (!espSeleccionado) {
+                alert('❌ Selecciona un ESP primero');
+                return;
+            }
+
+            const config = {
+                ssid: document.getElementById('wifiSSID').value,
+                password: document.getElementById('wifiPass').value,
+                servidor_ip: document.getElementById('serverIP').value,
+                servidor_port: document.getElementById('serverPort').value,
+                lora_freq: document.getElementById('loraFreq').value
+            };
+
+            try {
+                const response = await fetch(`/configurar_esp/${espSeleccionado}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ ESP configurado! Reiniciando...');
+                    document.getElementById('statusSection').style.display = 'block';
+                    cargarStatusESP(espSeleccionado);
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch(e) {
+                alert('❌ Error de conexión');
+            }
+        }
+
+        async function testConexion() {
+            if (!espSeleccionado) return;
+            try {
+                const response = await fetch(`/esp_status/${espSeleccionado}`);
+                const status = await response.json();
+                mostrarStatusESP(status);
+            } catch(e) {
+                alert('❌ ESP no responde');
+            }
+        }
+
+        function mostrarStatusESP(status) {
+            document.getElementById('espStatus').innerHTML = `
+                <div class="status-card">
+                    <span>🌡️ Temp</span>
+                    <div class="status-${status.temp > 0 ? 'online' : 'offline'}">${status.temp || 0}°C</div>
+                </div>
+                <div class="status-card">
+                    <span>💧 Humedad</span>
+                    <div class="status-${status.humidity > 0 ? 'online' : 'offline'}">${status.humidity || 0}%</div>
+                </div>
+                <div class="status-card">
+                    <span>🌧️ Lluvia</span>
+                    <div class="status-${status.rain >= 0 ? 'online' : 'offline'}">${status.rain || 0}%</div>
+                </div>
+                <div class="status-card">
+                    <span>📶 WiFi</span>
+                    <div class="${status.wifi === 'OK' ? 'status-online' : 'status-offline'}">${status.wifi}</div>
+                </div>
+                <div class="status-card">
+                    <span>📡 LoRa</span>
+                    <div class="${status.lora === 'OK' ? 'status-online' : 'status-offline'}">${status.lora}</div>
+                </div>
+            `;
+        }
+
+        async function cargarStatusESP(ip) {
+            try {
+                const response = await fetch(`/esp_status/${ip}`);
+                mostrarStatusESP(await response.json());
+            } catch(e) {}
+        }
+
+        // 🔍 Auto-scan cada 10s
+        setInterval(scanESPs, 10000);
+        scanESPs(); // Inicial
+    </script>
+</body>
+</html>
