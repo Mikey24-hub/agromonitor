@@ -1,50 +1,38 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// ✅ Proxy dinámico para ESP (cualquier IP)
+// ✅ SIRVE public/ correctamente
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'static')));
+
+// ✅ Proxy ESP (cualquier IP)
 app.use('/esp-proxy', (req, res, next) => {
-    const targetUrl = req.query.target;
-    
-    if (!targetUrl || !targetUrl.startsWith('http://')) {
-        return res.status(400).json({ error: 'URL target inválida' });
-    }
+    const target = req.query.target;
+    if (!target) return res.status(400).send('Falta target');
     
     const proxy = createProxyMiddleware({
-        target: targetUrl,
+        target: target,
         changeOrigin: true,
-        pathRewrite: {
-            '^/esp-proxy': '',  // Quita /esp-proxy
-            [`^/esp-proxy?target=${encodeURIComponent(targetUrl)}`]: ''
-        },
-        onProxyReq: (proxyReq, req) => {
-            // Copia headers y body
-            proxyReq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
-        },
+        pathRewrite: { '^/esp-proxy': '' },
         onError: (err, req, res) => {
-            res.status(503).json({ error: 'ESP no responde', details: err.message });
+            res.status(503).json({ error: 'ESP offline' });
         }
     });
-    
-    return proxy(req, res, next);
+    proxy(req, res, next);
 });
 
-// ✅ Servir archivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+// ✅ Rutas principales
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'templates/index_simple.html')));
+app.get('/esp_config.html', (req, res) => res.sendFile(path.join(__dirname, 'public/esp_config.html')));
 
-// ✅ Ruta principal
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'esp_config.html'));
+// ✅ Tus rutas existentes (data, csv, etc)
+app.get('/data', async (req, res) => {
+    // Tu lógica existente
+    res.json({ temp: 25.5, humidity: 65, rain: 0 });
 });
 
-// ✅ Health check
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 AgroMonitor ESP Config en puerto ${PORT}`);
-    console.log(`📱 https://tu-app.onrender.com/esp_config.html`);
+app.listen(process.env.PORT || 5000, () => {
+    console.log('🌱 AgroMonitor corriendo!');
 });
