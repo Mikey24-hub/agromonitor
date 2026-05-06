@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, Response
+from flask import Flask, render_template, jsonify, Response, send_from_directory, request
 import random
 from datetime import datetime
 import csv
@@ -10,7 +10,6 @@ import os
 import subprocess
 import re
 import requests 
-from flask import request, jsonify
 
 app = Flask(__name__, static_folder='.', static_url_path='') 
 
