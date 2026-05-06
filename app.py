@@ -9,7 +9,6 @@ import threading
 import os
 import subprocess
 import re
-import requests 
 
 app = Flask(__name__, static_folder='.', static_url_path='') 
 
