@@ -241,7 +241,7 @@ def configurar_esp(ip):
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/esp_config.html')
-
+def esp_config():
     """🔧 Página configuración ESP LoRa"""
     return render_template('esp_config.html', local_ip=LOCAL_IP)
 
