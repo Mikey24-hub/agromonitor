@@ -204,38 +204,51 @@ def esp_config():
 
 @app.route('/scan_esps')
 def scan_esps():
-    """🔍 ESP LoRa Automático - MÉTODO FÁCIL"""
-    print("🔍 === DETECTANDO ESP ===")
+    """🔍 Auto-detect ESPs - CUALQUIER IP"""
     esps = []
     
-    # IPs comunes ESP AP
-    ips_esp = ['192.168.4.1', '192.168.1.1']
+    print("🔍 === AUTO SCAN ESPs ===")
     
-    for ip in ips_esp:
-        print(f"Test {ip}...")
-        try:
-            r = requests.get(f'http://{ip}:80/', timeout=2)
-            print(f"  → {r.status_code} bytes:{len(r.text)}")
-            
-            # Detecta tu HTML config
-            if r.status_code == 200 and ('ESP' in r.text or 'wifi_ssid' in r.text):
-                esps.append({
-                    'ip': ip,
-                    'name': f'🌱 ESP LoRa v5.2 ({ip})',
-                    'online': True,
-                    'temp': 21.9,
-                    'humidity': 48.7,
-                    'rain': 0.0,
-                    'mode': 'AP Mode ✅'
-                })
-                print(f"✅ ESP ENCONTRADO: {ip}")
-                break
-        except Exception as e:
-            print(f"  → Error: {e}")
+    # 1. ARP scan TODA red local
+    try:
+        result = subprocess.run(['arp', '-a'], capture_output=True, text=True, timeout=4)
+        ips = re.findall(r'\b(?:192\.168|10\.|172\.1[6-9]|172\.2[0-9]|172\.3[0-1])\.\d{1,3}\b', result.stdout)
+        print(f"IPs encontradas: {len(ips)}")
+        
+        for ip in ips[:20]:  # 20 más rápidos
+            print(f"→ Test {ip}")
+            try:
+                # Test /status JSON
+                r = requests.get(f'http://{ip}:80/status', timeout=1.2)
+                if r.status_code == 200 and 'temp' in r.text:
+                    data = r.json()
+                    esps.append({
+                        'ip': ip,
+                        'name': data.get('device', f'ESP {ip.split(".")[-1]}'),
+                        'online': True,
+                        'temp': data.get('temp', 0),
+                        'humidity': data.get('humidity', 0)
+                    })
+                    print(f"✅ ESP LIVE: {ip} T{data.get('temp')}")
+                    break  # Primer ESP vivo
+                
+                # Test página config
+                r = requests.get(f'http://{ip}:80/', timeout=1.2)
+                if r.status_code == 200 and ('ESP' in r.text or 'LoRa' in r.text):
+                    esps.append({
+                        'ip': ip, 'name': f'ESP Config ({ip})',
+                        'online': True, 'temp': 0
+                    })
+                    print(f"✅ ESP Config: {ip}")
+                    break
+            except:
+                pass
+    except Exception as e:
+        print(f"ARP error: {e}")
     
     print(f"🔍 RESULTADO: {len(esps)} ESPs")
     return jsonify({'esps': esps})
-
+    
 @app.route('/esp_config/<ip>')
 def get_esp_config(ip):
     """📥 Config actual del ESP"""
