@@ -20,24 +20,29 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/api/datos', methods=['POST'])
 def api_datos():
-    """📡 ESP WiFi → Dashboard LIVE (FIX 404)"""
+    """📡 ESP WiFi → Dashboard LIVE"""
     try:
-        print("🔍 ESP DATOS:", request.get_data().decode())
+        print("🔍 ESP RAW:", request.get_data().decode())
         
-        # ✅ Recibe JSON del ESP8266
-        data = request.get_json() or {}
-        if not data:
-            data = request.form.to_dict()
+        # ✅ FIX: Primero JSON, luego form
+        data = {}
+        if request.is_json:
+            data = request.get_json()  # ESP JSON
+        else:
+            data = request.form.to_dict()  # Form backup
         
-        temp = float(data.get('temp', 0))
-        humidity = float(data.get('humidity', 0))
-        rain = float(data.get('rain', 0))
+        print("🔍 ESP PARSE:", data)
+        
+        # ✅ Nombres ESP vs app.py
+        temp = float(data.get('temp', data.get('t', 0)))
+        humidity = float(data.get('humidity', data.get('h', 0)))
+        rain = float(data.get('rain', data.get('r', 0)))
         rssi = int(data.get('rssi', -100))
         
         print(f"✅ ESP → T:{temp}°C H:{humidity}% R:{rain}% RSSI:{rssi}")
         
-        # Actualiza datos globales
-        global sensor_data, historicos_graficas, historico_times, historico_csv
+        # Globales
+        global sensor_data, historicos_graficas, historico_times
         sensor_data.update({
             'temp': temp, 'humidity': humidity, 'rain': rain,
             'rssi': rssi, 'modulos_conectados': True,
@@ -53,13 +58,10 @@ def api_datos():
         
         if len(historico_times) > 50:
             historico_times.pop(0)
-            for k in historicos_graficas: historicos_graficas[k].pop(0)
+            for k in historicos_graficas: 
+                historicos_graficas[k].pop(0)
         
-        # CSV
-        historico_csv.append([now_time, temp, humidity, rain])
-        sensor_data['total_registros'] = len(historico_csv)
-        
-        return jsonify({'status': 'OK', 'temp': temp}), 200
+        return jsonify({'status': 'OK'}), 200
         
     except Exception as e:
         print(f"❌ ESP Error: {e}")
