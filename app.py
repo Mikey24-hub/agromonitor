@@ -246,6 +246,20 @@ def status():
         'ultimo_registro': sensor_data['time']
     })
 
+
+@app.route('/api/status')
+def api_status():
+    """📊 Status para HTML moderno"""
+    return jsonify({
+        'temp': sensor_data['temp'],
+        'humidity': sensor_data['humidity'],
+        'rain': sensor_data['rain'],
+        'rssi': sensor_data.get('rssi', 0),
+        'timestamp': sensor_data['time'],
+        'device': 'ESP_AgroScan',
+        'modulos_conectados': sensor_data['modulos_conectados']
+    })
+
 @app.route('/scan_esps')
 def scan_esps():
     """🔍 Auto-detect ESPs - CUALQUIER IP"""
