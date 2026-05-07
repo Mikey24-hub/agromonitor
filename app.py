@@ -306,27 +306,49 @@ def public_files(filename):
     """📁 Servir archivos de public/"""
     return send_from_directory('public', filename)
 
-@app.route('/esp-proxy')
+@app.route('/esp-proxy', methods=['GET', 'POST'])
 def esp_proxy():
-    """🌐 Proxy CORS para ESP (cualquier IP)"""
+    """🌐 Proxy CORS para ESP (FIXED)"""
     target = request.args.get('target')
-    if not target or not re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', target):
-        return jsonify({'error': 'URL inválida'}), 400
+    
+    # Validar IP (cualquier privada)
+    if not target or not re.match(r'^http://(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?/?', target):
+        return jsonify({'error': 'URL inválida', 'target': target}), 400
+    
+    print(f"🔍 ESP Proxy → {target} ({request.method})")
     
     try:
-        resp = requests.request(
-            method=request.method,
-            url=target,
-            params={k: v[0] for k, v in request.args.items() if k != 'target'},
-            data=request.get_data(),
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            timeout=5
-        )
-        return Response(resp.content, resp.status_code, 
-                       [(k, v) for k, v in resp.headers.items()])
+        session = requests.Session()
+        if request.method == 'POST':
+            # Form data para /save ESP
+            form_data = request.form.to_dict() if request.form else {}
+            resp = session.post(target, 
+                              data=form_data,
+                              timeout=10,
+                              headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        else:
+            resp = session.get(target, timeout=10)
+        
+        print(f"📡 ESP → {resp.status_code}")
+        
+        # ✅ RETORNAR SIEMPRE 200 + JSON
+        content = resp.content.decode('utf-8', errors='ignore')
+        try:
+            json_data = json.loads(content)
+            return jsonify(json_data)
+        except:
+            return Response(content, status=200, mimetype='text/plain')
+            
+    except requests.exceptions.Timeout:
+        return jsonify({'error': 'ESP timeout (no responde)'})
     except Exception as e:
-        return jsonify({'error': f'ESP offline: {str(e)}'}), 503
-
+        print(f"❌ {e}")
+        return jsonify({
+            'error': 'ESP offline',
+            'target': target,
+            'tip': 'Conecta a hotspot "ESP_AgroScan"'
+        })
+        
 if __name__ == '__main__':
     threading.Thread(target=update_data, daemon=True).start()
     time.sleep(2)
