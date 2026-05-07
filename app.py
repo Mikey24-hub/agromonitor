@@ -177,50 +177,94 @@ def lora_data():
         print(f"❌ ESP Error: {e}")
         return jsonify({'status': 'ERROR'}), 400
 
-
 @app.route('/api/datos', methods=['POST'])
 def api_datos():
-    """📡 ESP WiFi → Dashboard LIVE (nueva versión)"""
+    """📡 ESP WiFi → Dashboard LIVE (FIX HTTP 400)"""
     global sensor_data, historicos_graficas, historico_times, historico_csv
     
     try:
-        data = request.get_json()
-        print(f"📡 ESP WiFi → T:{data['temp']:.1f}°C H:{data['humidity']:.1f}% R:{data['rain']:.1f}% RSSI:{data['rssi']}")
+        print("🔍 === ESP DATOS RAW ===")
+        print("HEADERS:", dict(request.headers))
+        print("RAW DATA:", request.get_data().decode('utf-8'))
         
-        # Actualiza dashboard INSTANTÁNEO
+        # ✅ MÚLTIPLES FORMAS de recibir datos
+        data = {}
+        
+        # 1️⃣ JSON preferido
+        if request.is_json:
+            data = request.get_json()
+            print("✅ JSON OK:", data)
+        # 2️⃣ Form data (x-www-form-urlencoded)
+        elif request.form:
+            data = request.form.to_dict()
+            print("✅ FORM OK:", data)
+        # 3️⃣ Query params Fallback
+        else:
+            data = request.args.to_dict()
+            print("✅ QUERY OK:", data)
+        
+        # ✅ VALIDAR datos mínimos
+        if not data:
+            print("❌ SIN DATOS")
+            return jsonify({'status': 'ERROR', 'message': 'No data received'}), 400
+        
+        # ✅ Extraer valores con fallback
+        temp = float(data.get('temp', data.get('temperature', 0)))
+        humidity = float(data.get('humidity', data.get('hum', 0)))
+        rain = float(data.get('rain', data.get('precip', 0)))
+        rssi = int(data.get('rssi', data.get('signal', WiFi.RSSI() if 'WiFi' in str(data) else -100)))
+        
+        print(f"📊 PROCESADO → T:{temp:.1f}°C H:{humidity:.1f}% R:{rain:.1f}% RSSI:{rssi}")
+        
+        # ✅ Actualiza dashboard INSTANTÁNEO
         sensor_data.update({
-            'temp': data.get('temp', 0),
-            'humidity': data.get('humidity', 0),
-            'rain': data.get('rain', 0),
-            'modulos_conectados': True,  # WiFi siempre conectado
-            'time': datetime.now().strftime('%H:%M:%S')
+            'temp': temp,
+            'humidity': humidity,
+            'rain': rain,
+            'modulos_conectados': True,
+            'time': datetime.now().strftime('%H:%M:%S'),
+            'rssi': rssi  # ✅ Para mostrar en HTML
         })
         
-        # Agrega RSSI al sensor_data para mostrar en HTML
-        sensor_data['rssi'] = data.get('rssi', 0)
-        
-        # Agrega a gráficos (igual que lora_data)
+        # ✅ Agrega a gráficos
         now_time = sensor_data['time']
         historico_times.append(now_time)
-        historicos_graficas['temp'].append(sensor_data['temp'])
-        historicos_graficas['humidity'].append(sensor_data['humidity']) 
-        historicos_graficas['rain'].append(sensor_data['rain'])
+        historicos_graficas['temp'].append(temp)
+        historicos_graficas['humidity'].append(humidity)
+        historicos_graficas['rain'].append(rain)
         
         # Límite 50 puntos
-        if len(historico_times) > 50:
+        max_points = 50
+        if len(historico_times) > max_points:
             historico_times.pop(0)
             for key in historicos_graficas:
                 historicos_graficas[key].pop(0)
         
-        # CSV histórico
-        registro = [now_time, sensor_data['temp'], sensor_data['humidity'], sensor_data['rain']]
+        # ✅ CSV histórico
+        registro = [now_time, temp, humidity, rain]
         historico_csv.append(registro)
         sensor_data['total_registros'] = len(historico_csv)
         
-        return jsonify({'status': 'OK', 'time': now_time})
+        print(f"✅ GUARDADO! Total: {sensor_data['total_registros']}")
+        
+        return jsonify({
+            'status': 'OK', 
+            'time': now_time,
+            'temp': temp,
+            'humidity': humidity,
+            'rain': rain,
+            'rssi': rssi
+        }), 200
+        
     except Exception as e:
-        print(f"❌ ESP WiFi Error: {e}")
-        return jsonify({'status': 'ERROR'}), 400
+        print(f"❌ ERROR DETALLADO: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'ERROR', 
+            'message': str(e),
+            'data_received': request.get_data().decode('utf-8', errors='ignore')
+        }), 400
 
 @app.route('/csv')
 def csv_download():
