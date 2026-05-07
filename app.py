@@ -15,7 +15,8 @@ import subprocess
 import re
 import requests
 
-app = Flask(__name__, static_folder='.', static_url_path='') 
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/service-worker.js')
 def serve_service_worker():
