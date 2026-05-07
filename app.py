@@ -1,4 +1,8 @@
 from flask import Flask, render_template, jsonify, Response, send_from_directory, request
+from flask_cors import CORS
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import json
 import random
 from datetime import datetime
 import csv
