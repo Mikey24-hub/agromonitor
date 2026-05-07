@@ -565,9 +565,13 @@ setTimeout(() => {
                 document.getElementById('tempValue').textContent = data.modulos_conectados ? data.temp.toFixed(1) : '0.0';
                 document.getElementById('humidityValue').textContent = data.modulos_conectados ? data.humidity.toFixed(1) : '0.0';
                 document.getElementById('rainValue').textContent = data.modulos_conectados ? data.rain.toFixed(1) : '0.0';
-                if (data.rssi !== undefined) {
-                    document.getElementById('rssiValue').textContent = data.rssi + 'dBm';
-                    document.getElementById('rssiCard').style.display = 'block';
+                const rssiCard = document.getElementById('rssiCard');
+                const rssiValue = document.getElementById('rssiValue');
+                if (data.rssi !== undefined && data.rssi !== null) {
+                    rssiValue.textContent = data.rssi + ' dBm';
+                    rssiCard.style.display = 'block';
+                } else {
+                    rssiCard.style.display = 'none';
                 }
                 document.getElementById('lastUpdate').textContent = data.time;
                 document.getElementById('totalRegistros').textContent = data.total_registros.toLocaleString();
