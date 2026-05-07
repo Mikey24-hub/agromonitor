@@ -18,6 +18,58 @@ import requests
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.route('/api/datos', methods=['POST'])
+def api_datos():
+    """📡 ESP WiFi → Dashboard LIVE (FIX 404)"""
+    try:
+        print("🔍 ESP DATOS:", request.get_data().decode())
+        
+        # ✅ Recibe JSON del ESP8266
+        data = request.get_json() or {}
+        if not data:
+            data = request.form.to_dict()
+        
+        temp = float(data.get('temp', 0))
+        humidity = float(data.get('humidity', 0))
+        rain = float(data.get('rain', 0))
+        rssi = int(data.get('rssi', -100))
+        
+        print(f"✅ ESP → T:{temp}°C H:{humidity}% R:{rain}% RSSI:{rssi}")
+        
+        # Actualiza datos globales
+        global sensor_data, historicos_graficas, historico_times, historico_csv
+        sensor_data.update({
+            'temp': temp, 'humidity': humidity, 'rain': rain,
+            'rssi': rssi, 'modulos_conectados': True,
+            'time': datetime.now().strftime('%H:%M:%S')
+        })
+        
+        # Gráficos
+        now_time = sensor_data['time']
+        historico_times.append(now_time)
+        historicos_graficas['temp'].append(temp)
+        historicos_graficas['humidity'].append(humidity)
+        historicos_graficas['rain'].append(rain)
+        
+        if len(historico_times) > 50:
+            historico_times.pop(0)
+            for k in historicos_graficas: historicos_graficas[k].pop(0)
+        
+        # CSV
+        historico_csv.append([now_time, temp, humidity, rain])
+        sensor_data['total_registros'] = len(historico_csv)
+        
+        return jsonify({'status': 'OK', 'temp': temp}), 200
+        
+    except Exception as e:
+        print(f"❌ ESP Error: {e}")
+        return jsonify({'status': 'ERROR', 'error': str(e)}), 400
+
+@app.route('/api/datos', methods=['GET'])
+def api_datos_get():
+    """🔍 Test endpoint"""
+    return jsonify({'status': 'OK', 'message': 'ESP endpoint listo!', 'timestamp': datetime.now().isoformat()})
+
 @app.route('/service-worker.js')
 def serve_service_worker():
     return send_from_directory('.', 'service-worker.js', mimetype='application/javascript')
